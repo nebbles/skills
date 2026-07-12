@@ -4,7 +4,11 @@ A personal collection of useful agent skills.
 
 ## Install
 
-### Claude Code Desktop
+### Claude Code via Marketplace
+
+The marketplace keeps up-to-date with the plugin, and works for Claude Code on the web.
+
+#### Desktop
 
 1. Go to the "Customize" page from the sidebar.
 2. Click the `+` next to "Personal plugins", select `Create plugin > Add marketplace`
@@ -13,7 +17,7 @@ A personal collection of useful agent skills.
 
 You can then choose which plugins to install from this repo.
 
-### Claude Code CLI
+#### CLI
 
 Add the marketplace
 
@@ -27,13 +31,19 @@ Then install a plugin from it, for example:
 /plugin install core@nebbles-plugins
 ```
 
-## Adding more skills
+### Skills
+
+```
+pnpx skills@latest add nebbles/skills
+```
+
+## Adding skills to this collection
+
+Files are symlinked into the core plugin.
 
 ```
 pnpx skills@latest add <repository>
 ```
-
-Files are symlinked into the core plugin.
 
 ## Credits
 

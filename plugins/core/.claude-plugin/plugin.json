@@ -9,7 +9,7 @@
     "email": "",
     "url": "https://github.com/nebbles"
   },
-  "repository": "https://github.com/nebbles/agent-plugins",
+  "repository": "https://github.com/nebbles/skills",
   "license": "MIT",
   "keywords": ["skills", "design", "animation", "code-review", "audit"]
 }

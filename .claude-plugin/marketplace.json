@@ -1,5 +1,5 @@
 {
-  "name": "nebbles-plugins",
+  "name": "nebbles-skills",
   "owner": {
     "name": "nebbles",
     "email": ""
@@ -8,9 +8,9 @@
   "plugins": [
     {
       "name": "core",
-      "source": "./plugins/agent-plugins",
+      "source": "./plugins/core",
       "description": "Design and engineering skills.",
-      "repository": "https://github.com/nebbles/agent-plugins",
+      "repository": "https://github.com/nebbles/skills",
       "license": "MIT",
       "keywords": ["skills", "design", "animation", "code-review", "audit"]
     }

@@ -13,7 +13,7 @@ The marketplace keeps up-to-date with the plugin, and works for Claude Code on t
 1. Go to the "Customize" page from the sidebar.
 2. Click the `+` next to "Personal plugins", select `Create plugin > Add marketplace`
 3. Choose `Add from repository`.
-4. Enter the marketplace name `nebbles/agent-plugins` and click `Sync`.
+4. Enter the marketplace name `nebbles/skills` and click `Sync`.
 
 You can then choose which plugins to install from this repo.
 
@@ -22,13 +22,13 @@ You can then choose which plugins to install from this repo.
 Add the marketplace
 
 ```
-/plugin marketplace add nebbles/agent-plugins
+/plugin marketplace add nebbles/skills
 ```
 
 Then install a plugin from it, for example:
 
 ```
-/plugin install core@nebbles-plugins
+/plugin install core@nebbles-skills
 ```
 
 ### Skills

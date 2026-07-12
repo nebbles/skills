@@ -1,0 +1,45 @@
+# Agent Plugins
+
+A personal collection of useful agent skills.
+
+## Install
+
+### Claude Code Desktop
+
+1. Go to the "Customize" page from the sidebar.
+2. Click the `+` next to "Personal plugins", select `Create plugin > Add marketplace`
+3. Choose `Add from repository`.
+4. Enter the marketplace name `nebbles/agent-plugins` and click `Sync`.
+
+You can then choose which plugins to install from this repo.
+
+### Claude Code CLI
+
+Add the marketplace
+
+```
+/plugin marketplace add nebbles/agent-plugins
+```
+
+Then install a plugin from it, for example:
+
+```
+/plugin install core@nebbles-plugins
+```
+
+## Adding more skills
+
+```
+pnpx skills@latest add <repository>
+```
+
+Files are symlinked into the core plugin.
+
+## Credits
+
+- https://github.com/mattpocock/skills
+- https://github.com/vercel-labs/agent-browser
+- https://github.com/stolinski/s-stack
+- https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md
+- https://github.com/emilkowalski/skills
+- https://github.com/shadcn/improve

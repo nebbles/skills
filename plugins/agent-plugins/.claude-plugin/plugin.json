@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "core",
+  "displayName": "Core",
+  "version": "0.1.0",
+  "description": "Design and engineering skills.",
+  "author": {
+    "name": "nebbles",
+    "email": "",
+    "url": "https://github.com/nebbles"
+  },
+  "repository": "https://github.com/nebbles/agent-plugins",
+  "license": "MIT",
+  "keywords": ["skills", "design", "animation", "code-review", "audit"]
+}

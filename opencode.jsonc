@@ -1,32 +1,61 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "sentry": {
-      "type": "remote",
-      "url": "https://mcp.sentry.dev/mcp",
-      "oauth": {}
-    },
-    "posthog": {
-      "type": "remote",
-      "url": "https://mcp.posthog.com/mcp?readonly=true"
-    },
-    "linear": {
-      "type": "remote",
-      "url": "https://mcp.linear.app/mcp"
-    },
-    "aws-mcp": {
-      "type": "remote",
-      "url": "https://aws-mcp.eu-central-1.api.aws/mcp",
-      "oauth": {},
-      "enabled": true,
-      "timeout": 100000
+    "servers": {
+      "sentry": {
+        "type": "remote",
+        "url": "https://mcp.sentry.dev/mcp",
+        "oauth": {}
+      },
+      "posthog": {
+        "type": "remote",
+        "url": "https://mcp.posthog.com/mcp?readonly=true"
+      },
+      "linear": {
+        "type": "remote",
+        "url": "https://mcp.linear.app/mcp"
+      },
+      "aws-mcp": {
+        "type": "remote",
+        "url": "https://aws-mcp.eu-central-1.api.aws/mcp",
+        "oauth": {},
+        "disabled": false,
+        "timeout": {
+          "catalog": 100000,
+          "execution": 100000
+        }
+      }
     }
   },
-  "plugin": [
-    "@plannotator/opencode@latest"
-  ],
   "plugins": [
     "@plannotator/opencode@latest"
+  ],
+  "permissions": [
+    { "action": "linear_*", "resource": "*", "effect": "ask" },
+    { "action": "linear_get_*", "resource": "*", "effect": "allow" },
+    { "action": "linear_list_*", "resource": "*", "effect": "allow" },
+    { "action": "linear_create_attachment", "resource": "*", "effect": "ask" },
+    { "action": "linear_create_attachment_from_upload", "resource": "*", "effect": "ask" },
+    { "action": "linear_create_initiative_label", "resource": "*", "effect": "ask" },
+    { "action": "linear_create_issue_label", "resource": "*", "effect": "ask" },
+    { "action": "linear_extract_images", "resource": "*", "effect": "ask" },
+    { "action": "linear_merge_diff", "resource": "*", "effect": "ask" },
+    { "action": "linear_prepare_attachment_upload", "resource": "*", "effect": "ask" },
+    { "action": "linear_resolve_diff_thread", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_comment", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_customer", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_customer_need", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_diff_comment", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_document", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_initiative", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_issue", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_milestone", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_project", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_release", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_release_note", "resource": "*", "effect": "ask" },
+    { "action": "linear_save_status_update", "resource": "*", "effect": "ask" },
+    { "action": "linear_search_documentation", "resource": "*", "effect": "ask" },
+    { "action": "linear_submit_diff_review", "resource": "*", "effect": "ask" }
   ],
   "skills": [
     "~/code/nebbles/skills/.agents"

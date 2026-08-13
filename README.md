@@ -53,3 +53,10 @@ pnpx skills@latest add <repository>
 - https://github.com/cursor/plugins/blob/main/cursor-team-kit/skills/thermo-nuclear-code-quality-review/SKILL.md
 - https://github.com/emilkowalski/skills
 - https://github.com/shadcn/improve
+- humanlayer/skills --skill show-me
+
+## Sourcing from others
+
+```
+pnpx skills add <repo> --skill <skill_name>
+```

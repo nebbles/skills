@@ -14,14 +14,6 @@
       "type": "remote",
       "url": "https://mcp.linear.app/mcp"
     },
-    "github": {
-      "type": "remote",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer {env:GITHUB_MCP_PAT}"
-      }
-    },
     "aws-mcp": {
       "type": "remote",
       "url": "https://aws-mcp.eu-central-1.api.aws/mcp",

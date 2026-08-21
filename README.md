@@ -45,6 +45,10 @@ Files are symlinked into the core plugin.
 pnpx skills@latest add <repository>
 ```
 
+## OpenCode plugins
+
+- [GitHub PR monitor](.opencode/plugins/pr-monitor/README.md): poll a PR and send changed activity to the watching OpenCode V2 session.
+
 ## Credits
 
 - https://github.com/mattpocock/skills

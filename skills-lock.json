@@ -49,6 +49,12 @@
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "8bdf9e4e6de7a4969147bf4828a4ad2c5aacd9fba4b690b250a85e0467ca387d"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -102,6 +108,24 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "8bf292143ca93b00276a0de0fc5f84f2381f4690c5b0d32e99fa283a072f392f"
+    },
+    "plannotator-annotate": {
+      "source": "backnotprop/plannotator",
+      "sourceType": "github",
+      "skillPath": "apps/skills/core/plannotator-annotate/SKILL.md",
+      "computedHash": "5b1f7d375299f4fc10ae9325f49bba6a811ef6adc990e4928456da4ab2e05462"
+    },
+    "plannotator-last": {
+      "source": "backnotprop/plannotator",
+      "sourceType": "github",
+      "skillPath": "apps/skills/core/plannotator-last/SKILL.md",
+      "computedHash": "b4555aae427c95867fcf32820e4e3dd6ec249f9b6540eede747dd7772ffdc18e"
+    },
+    "plannotator-review": {
+      "source": "backnotprop/plannotator",
+      "sourceType": "github",
+      "skillPath": "apps/skills/core/plannotator-review/SKILL.md",
+      "computedHash": "8b811a572b96c3dd08a944b3a6a5369bac32f08ea6a3e837c001cf4ed6235a14"
     },
     "prototype": {
       "source": "mattpocock/skills",
@@ -186,6 +210,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/wayfinder/SKILL.md",
       "computedHash": "3eb72cd9abdfaa00e10fa69f0b4410ff8639a6cf4eb9e5d187b289c3aa9be2fc"
+    },
+    "web-animation-design": {
+      "source": "vercel-labs/open-agents",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/web-animation-design/SKILL.md",
+      "computedHash": "dcd3f6da245643cd00ef93ad73ea62edc3ae925c6d7763c0675892441d6ba6c3"
     },
     "writing-great-skills": {
       "source": "mattpocock/skills",

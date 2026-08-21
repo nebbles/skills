@@ -126,7 +126,6 @@ Elements that animate together must use the same easing and duration. Modal + ov
 | Modals, drawers                   | 200-300ms |
 
 **Rules:**
-
 - UI animations should stay under 300ms
 - Larger elements animate slower than smaller ones
 - Exit animations can be ~20% faster than entrance

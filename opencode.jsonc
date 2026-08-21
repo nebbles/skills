@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "sentry": {
+      "type": "remote",
+      "url": "https://mcp.sentry.dev/mcp",
+      "oauth": {}
+    },
+    "posthog": {
+      "type": "remote",
+      "url": "https://mcp.posthog.com/mcp"
+    },
+    "linear": {
+      "type": "remote",
+      "url": "https://mcp.linear.app/mcp"
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_MCP_PAT}"
+      }
+    },
+    "aws-mcp": {
+      "type": "remote",
+      "url": "https://aws-mcp.eu-central-1.api.aws/mcp",
+      "oauth": {},
+      "enabled": true,
+      "timeout": 100000
+    }
+  },
+  "plugin": [
+    "@plannotator/opencode@latest"
+  ],
+  "plugins": [
+    "@plannotator/opencode@latest"
+  ],
+  "skills": [
+    "~/code/nebbles/skills/.agents"
+  ]
+}

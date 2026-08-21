@@ -8,7 +8,7 @@
     },
     "posthog": {
       "type": "remote",
-      "url": "https://mcp.posthog.com/mcp"
+      "url": "https://mcp.posthog.com/mcp?readonly=true"
     },
     "linear": {
       "type": "remote",

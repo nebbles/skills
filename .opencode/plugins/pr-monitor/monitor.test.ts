@@ -93,6 +93,18 @@ describe("snapshot changes", () => {
       { label: "Check", detail: "ci:test is SUCCESS run-2" },
     ])
   })
+
+  test("keeps duplicate check names from separate runs", () => {
+    const normalized = normalizeSnapshot({
+      ...base,
+      statusCheckRollup: [
+        { __typename: "CheckRun", name: "test", workflowName: "ci", conclusion: "SUCCESS", detailsUrl: "run-1" },
+        { __typename: "CheckRun", name: "test", workflowName: "ci", conclusion: "SUCCESS", detailsUrl: "run-2" },
+      ],
+    })
+
+    expect(Object.keys(normalized.checks)).toHaveLength(2)
+  })
 })
 
 describe("monitor", () => {
@@ -158,6 +170,24 @@ describe("monitor", () => {
 
     expect(monitor.status("ses_1")).toBeUndefined()
     expect(deliveries).toBe(0)
+  })
+
+  test("does not create a watch stopped during baseline capture", async () => {
+    let release: ((snapshot: PullRequestSnapshot) => void) | undefined
+    const monitor = createMonitor({
+      fetchSnapshot: async () =>
+        await new Promise<PullRequestSnapshot>((resolve) => {
+          release = resolve
+        }),
+      deliver: async () => {},
+    })
+
+    const watch = monitor.watch("ses_1", "acme/widgets#42")
+    expect(monitor.unwatch("ses_1")).toBe(true)
+    release?.(base)
+
+    await expect(watch).rejects.toThrow("stopped or replaced")
+    expect(monitor.status("ses_1")).toBeUndefined()
   })
 })
 

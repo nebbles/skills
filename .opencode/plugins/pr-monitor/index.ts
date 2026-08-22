@@ -26,20 +26,25 @@ export default Plugin.define({
     const monitor = createMonitor({
       fetchSnapshot: fetchPullRequestSnapshot,
       deliver: async ({ sessionID, eventID, ref, text }) => {
-        await ctx.session.synthetic({
-          sessionID,
-          text,
-          description: `GitHub PR activity: ${ref.repository}#${ref.number}`,
-          metadata: {
-            source: "github",
-            eventID,
-            repository: ref.repository,
-            pullRequestNumber: ref.number,
-            url: ref.url,
-          },
-          delivery: "queue",
-          resume: true,
-        })
+        try {
+          await ctx.session.synthetic({
+            sessionID,
+            id: `msg_github_${eventID}`,
+            text,
+            description: `GitHub PR activity: ${ref.repository}#${ref.number}`,
+            metadata: {
+              source: "github",
+              eventID,
+              repository: ref.repository,
+              pullRequestNumber: ref.number,
+              url: ref.url,
+            },
+            delivery: "queue",
+            resume: true,
+          })
+        } catch (error) {
+          if (!isConflictError(error)) throw error
+        }
       },
     })
 
@@ -104,4 +109,13 @@ function readPullRequest(input: unknown): string {
     throw new Error("pullRequest is required")
   }
   return pullRequest
+}
+
+function isConflictError(error: unknown): boolean {
+  if (typeof error === "object" && error !== null) {
+    const value = error as Record<string, unknown>
+    if (value._tag === "ConflictError" || value.name === "ConflictError" || value.status === 409) return true
+    if (value.cause !== error && isConflictError(value.cause)) return true
+  }
+  return error instanceof Error && error.message.includes("ConflictError")
 }

@@ -140,19 +140,25 @@ export function formatActivity(ref: PullRequestRef, snapshot: PullRequestSnapsho
 
 export function createMonitor(dependencies: MonitorDependencies) {
   const watches = new Map<string, Watch>()
+  const watchRequests = new Map<string, symbol>()
   let polling = false
   const now = dependencies.now ?? (() => new Date())
 
   return {
     async watch(sessionID: string, value: string) {
       const ref = parsePullRequest(value)
+      const request = Symbol()
+      watchRequests.set(sessionID, request)
       const snapshot = await dependencies.fetchSnapshot(ref)
+      if (watchRequests.get(sessionID) !== request) throw new Error("PR watch was stopped or replaced")
+      watchRequests.delete(sessionID)
       watches.set(sessionID, { ref, snapshot, lastCheckedAt: now().toISOString() })
       return { ref, snapshot }
     },
 
     unwatch(sessionID: string) {
-      return watches.delete(sessionID)
+      const pending = watchRequests.delete(sessionID)
+      return watches.delete(sessionID) || pending
     },
 
     status(sessionID: string) {
@@ -240,7 +246,9 @@ function normalizeChecks(value: unknown): Record<string, SnapshotActivity> {
       const check = asRecord(entry, "GitHub returned an invalid check")
       const name = stringValue(check.name) || stringValue(check.context) || `check-${index + 1}`
       const workflow = stringValue(check.workflowName)
-      const key = `${workflow}:${name}`
+      const kind = stringValue(check.__typename) || "Check"
+      const url = stringValue(check.detailsUrl) || stringValue(check.targetUrl)
+      const key = `${kind}:${workflow}:${name}:${url || index}`
       return [
         key,
         {
@@ -248,7 +256,7 @@ function normalizeChecks(value: unknown): Record<string, SnapshotActivity> {
           body: name,
           state: stringValue(check.conclusion) || stringValue(check.state) || stringValue(check.status),
           updatedAt: stringValue(check.completedAt) || stringValue(check.startedAt),
-          url: stringValue(check.detailsUrl) || stringValue(check.targetUrl),
+          url,
         },
       ]
     }),
@@ -294,12 +302,19 @@ function addCheckChanges(
   for (const [key, check] of Object.entries(next)) {
     const before = previous[key]
     if (!before || JSON.stringify(before) !== JSON.stringify(check)) {
-      changes.push({ label: "Check", detail: `${key} is ${check.state || "unknown"}${check.url ? ` ${check.url}` : ""}` })
+      changes.push({
+        label: "Check",
+        detail: `${checkDisplayName(check, key)} is ${check.state || "unknown"}${check.url ? ` ${check.url}` : ""}`,
+      })
     }
   }
-  for (const key of Object.keys(previous)) {
-    if (!(key in next)) changes.push({ label: "Check", detail: `${key} was removed` })
+  for (const [key, check] of Object.entries(previous)) {
+    if (!(key in next)) changes.push({ label: "Check", detail: `${checkDisplayName(check, key)} was removed` })
   }
+}
+
+function checkDisplayName(check: SnapshotActivity, fallback: string): string {
+  return [check.author, check.body].filter(Boolean).join(":") || fallback
 }
 
 function semanticEventID(ref: PullRequestRef, previous: PullRequestSnapshot, next: PullRequestSnapshot): string {

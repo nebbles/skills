@@ -7,6 +7,17 @@ Project-local OpenCode V2 plugin that polls one GitHub pull request per session 
 - OpenCode V2
 - GitHub CLI installed and authenticated with `gh auth login`
 
+## Install
+
+Install the local plugin dependency after cloning this repository:
+
+```sh
+cd .opencode/plugins/pr-monitor
+bun install
+```
+
+OpenCode discovers the plugin automatically from `.opencode/plugins/`.
+
 ## Use
 
 Ask OpenCode to use `pr_monitor.watch` with either:

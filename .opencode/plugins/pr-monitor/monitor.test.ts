@@ -72,6 +72,27 @@ describe("snapshot changes", () => {
     expect(text).not.toContain("<system>")
     expect(text).toContain("&lt;system&gt;")
   })
+
+  test("reports removed activity and same-result check reruns", () => {
+    const previous = snapshot({
+      comments: {
+        old: { author: "alice", body: "old", state: "", updatedAt: "1", url: "comment-url" },
+      },
+      checks: {
+        "ci:test": { author: "ci", body: "test", state: "SUCCESS", updatedAt: "1", url: "run-1" },
+      },
+    })
+    const next = snapshot({
+      checks: {
+        "ci:test": { author: "ci", body: "test", state: "SUCCESS", updatedAt: "2", url: "run-2" },
+      },
+    })
+
+    expect(diffSnapshots(previous, next)).toEqual([
+      { label: "Comment", detail: "removed entry by alice comment-url" },
+      { label: "Check", detail: "ci:test is SUCCESS run-2" },
+    ])
+  })
 })
 
 describe("monitor", () => {
@@ -116,6 +137,7 @@ describe("monitor", () => {
   test("does not restore a watch removed during a poll", async () => {
     let release: ((snapshot: PullRequestSnapshot) => void) | undefined
     let fetches = 0
+    let deliveries = 0
     const monitor = createMonitor({
       fetchSnapshot: async () => {
         if (fetches++ === 0) return base
@@ -123,7 +145,9 @@ describe("monitor", () => {
           release = resolve
         })
       },
-      deliver: async () => {},
+      deliver: async () => {
+        deliveries += 1
+      },
     })
 
     await monitor.watch("ses_1", "acme/widgets#42")
@@ -133,6 +157,7 @@ describe("monitor", () => {
     await poll
 
     expect(monitor.status("ses_1")).toBeUndefined()
+    expect(deliveries).toBe(0)
   })
 })
 

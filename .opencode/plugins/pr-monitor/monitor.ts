@@ -12,7 +12,7 @@ interface Activity {
   detail: string
 }
 
-interface Item {
+interface SnapshotActivity {
   author: string
   body: string
   state: string
@@ -29,9 +29,9 @@ export interface PullRequestSnapshot {
   mergeStateStatus: string
   reviewDecision: string
   updatedAt: string
-  comments: Record<string, Item>
-  reviews: Record<string, Item>
-  checks: Record<string, Item>
+  comments: Record<string, SnapshotActivity>
+  reviews: Record<string, SnapshotActivity>
+  checks: Record<string, SnapshotActivity>
 }
 
 interface Watch {
@@ -168,6 +168,7 @@ export function createMonitor(dependencies: MonitorDependencies) {
           [...watches.entries()].map(async ([sessionID, watch]) => {
             try {
               const snapshot = await dependencies.fetchSnapshot(watch.ref)
+              if (watches.get(sessionID) !== watch) return
               const changes = diffSnapshots(watch.snapshot, snapshot)
               if (changes.length > 0) {
                 const eventID = semanticEventID(watch.ref, watch.snapshot, snapshot)
@@ -213,13 +214,13 @@ function runGh(args: string[]): Promise<string> {
   })
 }
 
-function normalizeItems(value: unknown, kind: string): Record<string, Item> {
+function normalizeItems(value: unknown, kind: string): Record<string, SnapshotActivity> {
   if (!Array.isArray(value)) return {}
   return Object.fromEntries(
     value.map((entry, index) => {
       const item = asRecord(entry, `GitHub returned an invalid ${kind}`)
       const author = asOptionalRecord(item.author)
-      const normalized: Item = {
+      const normalized: SnapshotActivity = {
         author: stringValue(author?.login) || "unknown",
         body: stringValue(item.body),
         state: stringValue(item.state),
@@ -232,7 +233,7 @@ function normalizeItems(value: unknown, kind: string): Record<string, Item> {
   )
 }
 
-function normalizeChecks(value: unknown): Record<string, Item> {
+function normalizeChecks(value: unknown): Record<string, SnapshotActivity> {
   if (!Array.isArray(value)) return {}
   return Object.fromEntries(
     value.map((entry, index) => {
@@ -258,7 +259,12 @@ function addFieldChange(changes: Activity[], label: string, before: string, afte
   if (before !== after) changes.push({ label, detail: `${before || "unknown"} -> ${after || "unknown"}` })
 }
 
-function addItemChanges(changes: Activity[], label: string, previous: Record<string, Item>, next: Record<string, Item>) {
+function addItemChanges(
+  changes: Activity[],
+  label: string,
+  previous: Record<string, SnapshotActivity>,
+  next: Record<string, SnapshotActivity>,
+) {
   for (const [id, item] of Object.entries(next)) {
     const before = previous[id]
     if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
@@ -270,14 +276,29 @@ function addItemChanges(changes: Activity[], label: string, previous: Record<str
       })
     }
   }
+  for (const [id, item] of Object.entries(previous)) {
+    if (!(id in next)) {
+      changes.push({
+        label,
+        detail: `removed entry by ${item.author}${item.url ? ` ${item.url}` : ""}`,
+      })
+    }
+  }
 }
 
-function addCheckChanges(changes: Activity[], previous: Record<string, Item>, next: Record<string, Item>) {
+function addCheckChanges(
+  changes: Activity[],
+  previous: Record<string, SnapshotActivity>,
+  next: Record<string, SnapshotActivity>,
+) {
   for (const [key, check] of Object.entries(next)) {
     const before = previous[key]
-    if (!before || before.state !== check.state) {
+    if (!before || JSON.stringify(before) !== JSON.stringify(check)) {
       changes.push({ label: "Check", detail: `${key} is ${check.state || "unknown"}${check.url ? ` ${check.url}` : ""}` })
     }
+  }
+  for (const key of Object.keys(previous)) {
+    if (!(key in next)) changes.push({ label: "Check", detail: `${key} was removed` })
   }
 }
 

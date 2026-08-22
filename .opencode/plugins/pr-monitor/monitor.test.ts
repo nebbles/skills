@@ -105,6 +105,25 @@ describe("snapshot changes", () => {
 
     expect(Object.keys(normalized.checks)).toHaveLength(2)
   })
+
+  test("keeps URL-less check identities stable when GitHub reorders them", () => {
+    const first = normalizeSnapshot({
+      ...base,
+      statusCheckRollup: [
+        { __typename: "StatusContext", context: "lint", state: "SUCCESS" },
+        { __typename: "StatusContext", context: "test", state: "SUCCESS" },
+      ],
+    })
+    const second = normalizeSnapshot({
+      ...base,
+      statusCheckRollup: [
+        { __typename: "StatusContext", context: "test", state: "SUCCESS" },
+        { __typename: "StatusContext", context: "lint", state: "SUCCESS" },
+      ],
+    })
+
+    expect(second.checks).toEqual(first.checks)
+  })
 })
 
 describe("monitor", () => {
@@ -144,6 +163,48 @@ describe("monitor", () => {
     await monitor.pollAll()
     expect(deliveries).toBe(2)
     expect(monitor.status("ses_1")?.snapshot.reviewDecision).toBe("APPROVED")
+  })
+
+  test("retries the same event before delivering newer GitHub activity", async () => {
+    const approved = snapshot({ reviewDecision: "APPROVED" })
+    const merged = snapshot({ reviewDecision: "APPROVED", state: "MERGED" })
+    const snapshots = [base, approved, merged]
+    const eventIDs: string[] = []
+    const monitor = createMonitor({
+      fetchSnapshot: async () => snapshots.shift() ?? merged,
+      deliver: async ({ eventID }) => {
+        eventIDs.push(eventID)
+        if (eventIDs.length === 1) throw new Error("ambiguous transport failure")
+      },
+    })
+
+    await monitor.watch("ses_1", "acme/widgets#42")
+    await monitor.pollAll()
+    await monitor.pollAll()
+
+    expect(eventIDs).toHaveLength(3)
+    expect(eventIDs[1]).toBe(eventIDs[0])
+    expect(eventIDs[2]).not.toBe(eventIDs[0])
+    expect(monitor.status("ses_1")?.snapshot.state).toBe("MERGED")
+  })
+
+  test("scopes event identities to the target session", async () => {
+    const changed = snapshot({ state: "MERGED" })
+    const snapshots = [base, base, changed, changed]
+    const eventIDs: string[] = []
+    const monitor = createMonitor({
+      fetchSnapshot: async () => snapshots.shift() ?? changed,
+      deliver: async ({ eventID }) => {
+        eventIDs.push(eventID)
+      },
+    })
+
+    await monitor.watch("ses_1", "acme/widgets#42")
+    await monitor.watch("ses_2", "acme/widgets#42")
+    await monitor.pollAll()
+
+    expect(eventIDs).toHaveLength(2)
+    expect(eventIDs[0]).not.toBe(eventIDs[1])
   })
 
   test("does not restore a watch removed during a poll", async () => {
@@ -188,6 +249,18 @@ describe("monitor", () => {
 
     await expect(watch).rejects.toThrow("stopped or replaced")
     expect(monitor.status("ses_1")).toBeUndefined()
+  })
+
+  test("clears a failed baseline request", async () => {
+    const monitor = createMonitor({
+      fetchSnapshot: async () => {
+        throw new Error("GitHub unavailable")
+      },
+      deliver: async () => {},
+    })
+
+    await expect(monitor.watch("ses_1", "acme/widgets#42")).rejects.toThrow("GitHub unavailable")
+    expect(monitor.unwatch("ses_1")).toBe(false)
   })
 })
 

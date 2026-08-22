@@ -39,6 +39,11 @@ interface Watch {
   snapshot: PullRequestSnapshot
   lastCheckedAt: string
   lastError?: string
+  pending?: {
+    eventID: string
+    text: string
+    snapshot: PullRequestSnapshot
+  }
 }
 
 interface MonitorDependencies {
@@ -149,7 +154,13 @@ export function createMonitor(dependencies: MonitorDependencies) {
       const ref = parsePullRequest(value)
       const request = Symbol()
       watchRequests.set(sessionID, request)
-      const snapshot = await dependencies.fetchSnapshot(ref)
+      let snapshot: PullRequestSnapshot
+      try {
+        snapshot = await dependencies.fetchSnapshot(ref)
+      } catch (error) {
+        if (watchRequests.get(sessionID) === request) watchRequests.delete(sessionID)
+        throw error
+      }
       if (watchRequests.get(sessionID) !== request) throw new Error("PR watch was stopped or replaced")
       watchRequests.delete(sessionID)
       watches.set(sessionID, { ref, snapshot, lastCheckedAt: now().toISOString() })
@@ -171,18 +182,45 @@ export function createMonitor(dependencies: MonitorDependencies) {
       polling = true
       try {
         await Promise.all(
-          [...watches.entries()].map(async ([sessionID, watch]) => {
+          [...watches.entries()].map(async ([sessionID, initialWatch]) => {
+            let watch = initialWatch
             try {
+              if (watch.pending) {
+                await dependencies.deliver({
+                  sessionID,
+                  eventID: watch.pending.eventID,
+                  ref: watch.ref,
+                  text: watch.pending.text,
+                })
+                if (watches.get(sessionID) !== watch) return
+                watch = {
+                  ref: watch.ref,
+                  snapshot: watch.pending.snapshot,
+                  lastCheckedAt: now().toISOString(),
+                }
+                watches.set(sessionID, watch)
+              }
+
               const snapshot = await dependencies.fetchSnapshot(watch.ref)
               if (watches.get(sessionID) !== watch) return
               const changes = diffSnapshots(watch.snapshot, snapshot)
               if (changes.length > 0) {
-                const eventID = semanticEventID(watch.ref, watch.snapshot, snapshot)
+                const pending = {
+                  eventID: semanticEventID(sessionID, watch.ref, watch.snapshot, snapshot),
+                  text: formatActivity(watch.ref, snapshot, changes),
+                  snapshot,
+                }
+                watch = {
+                  ...watch,
+                  pending,
+                  lastCheckedAt: now().toISOString(),
+                }
+                watches.set(sessionID, watch)
                 await dependencies.deliver({
                   sessionID,
-                  eventID,
+                  eventID: pending.eventID,
                   ref: watch.ref,
-                  text: formatActivity(watch.ref, snapshot, changes),
+                  text: pending.text,
                 })
               }
               if (watches.get(sessionID) !== watch) return
@@ -241,24 +279,30 @@ function normalizeItems(value: unknown, kind: string): Record<string, SnapshotAc
 
 function normalizeChecks(value: unknown): Record<string, SnapshotActivity> {
   if (!Array.isArray(value)) return {}
-  return Object.fromEntries(
-    value.map((entry, index) => {
+  const checks = value
+    .map((entry, index) => {
       const check = asRecord(entry, "GitHub returned an invalid check")
-      const name = stringValue(check.name) || stringValue(check.context) || `check-${index + 1}`
-      const workflow = stringValue(check.workflowName)
+      const activity: SnapshotActivity = {
+        author: stringValue(check.workflowName),
+        body: stringValue(check.name) || stringValue(check.context) || `check-${index + 1}`,
+        state: stringValue(check.conclusion) || stringValue(check.state) || stringValue(check.status),
+        updatedAt: stringValue(check.completedAt) || stringValue(check.startedAt),
+        url: stringValue(check.detailsUrl) || stringValue(check.targetUrl),
+      }
       const kind = stringValue(check.__typename) || "Check"
-      const url = stringValue(check.detailsUrl) || stringValue(check.targetUrl)
-      const key = `${kind}:${workflow}:${name}:${url || index}`
-      return [
-        key,
-        {
-          author: workflow,
-          body: name,
-          state: stringValue(check.conclusion) || stringValue(check.state) || stringValue(check.status),
-          updatedAt: stringValue(check.completedAt) || stringValue(check.startedAt),
-          url,
-        },
-      ]
+      const base = `${kind}:${activity.author}:${activity.body}`
+      const identity = activity.url || createHash("sha256").update(JSON.stringify(activity)).digest("hex").slice(0, 16)
+      return { activity, base, identity }
+    })
+    .sort((left, right) => `${left.base}:${left.identity}`.localeCompare(`${right.base}:${right.identity}`))
+
+  const occurrences = new Map<string, number>()
+  return Object.fromEntries(
+    checks.map(({ activity, base, identity }) => {
+      const candidate = `${base}:${identity}`
+      const occurrence = occurrences.get(candidate) ?? 0
+      occurrences.set(candidate, occurrence + 1)
+      return [`${candidate}:${occurrence}`, activity]
     }),
   )
 }
@@ -317,9 +361,14 @@ function checkDisplayName(check: SnapshotActivity, fallback: string): string {
   return [check.author, check.body].filter(Boolean).join(":") || fallback
 }
 
-function semanticEventID(ref: PullRequestRef, previous: PullRequestSnapshot, next: PullRequestSnapshot): string {
+function semanticEventID(
+  sessionID: string,
+  ref: PullRequestRef,
+  previous: PullRequestSnapshot,
+  next: PullRequestSnapshot,
+): string {
   return createHash("sha256")
-    .update(`${ref.repository}#${ref.number}\n${JSON.stringify(previous)}\n${JSON.stringify(next)}`)
+    .update(`${sessionID}\n${ref.repository}#${ref.number}\n${JSON.stringify(previous)}\n${JSON.stringify(next)}`)
     .digest("hex")
     .slice(0, 24)
 }

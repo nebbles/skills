@@ -10,6 +10,15 @@ A good reference is the linux kernel patches. The commit message includes the ba
 Structure with minimal markdown (i.e. avoiding tables, HTML, etc.) and keeping to simple formatting is easier to read. 
 
 Footers should be used for relevant metadata, like issue numbers and co-authors where relevant.
+Examples:
+
+```
+Resolves ENG-479
+Resolves SENTRY-1A
+Claude-Session: https://claude.ai/code/session_123
+Co-Authored-By: John Smith <john.smith@example.com>
+Signed-Off-By: John Smith <john.smith@example.com>
+```
 
 Aspects that are relevant only to the review, merging, and deployment of the patch (e.g. test methodology, PR stacking, deployment notes) do not belong in the description but instead should be put in a comment.
 
